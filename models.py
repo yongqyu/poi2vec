@@ -10,13 +10,12 @@ from torch.autograd import Variable
 import config
 
 class POI2VEC(nn.Module):
-    def __init__(self, poi_cnt, user_cnt, id2poi, id2route, id2lr, id2prob):
+    def __init__(self, poi_cnt, user_cnt, id2route, id2lr, id2prob):
         super(POI2VEC, self).__init__()
 
         # attributes
-        route_cnt = np.max([a for b in id2route for a in b])+1 # 2812920+1
-        self.id2poi = np.array(id2poi)
-        self.id2route = np.array(id2route)
+        route_cnt = np.power(2, config.route_depth)-1
+        self.id2route = id2route
         self.id2lr = np.array(id2lr)
         self.id2prob = np.array(id2prob)
 
@@ -30,14 +29,16 @@ class POI2VEC(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, user, context, target):
+        target = map(int, target)
+        #print target, self.id2route[target].shape
         # !!remove the last element of route, to downsize tree and route_weight!!
-        route = Variable(torch.from_numpy(self.id2route[target_poi]))\
+        route = Variable(torch.from_numpy(self.id2route[target]))\
                         .contiguous().view(-1, config.route_count*config.route_depth).type(config.ltype)
-                        # batch x (route_coutn(4) x route_dept(21))
-        lr = Variable(torch.from_numpy(self.id2lr[target_poi]))\
+                        # batch x (route_coutn(4) x route_dept(22))
+        lr = Variable(torch.from_numpy(self.id2lr[target]))\
                         .view(-1, config.route_count*(config.route_depth)).type(config.ftype)
                         # batch x (route_count(4) x route_depth(21))
-        prob = Variable(torch.from_numpy(self.id2prob[target_poi]))\
+        prob = Variable(torch.from_numpy(self.id2prob[target]))\
                         .view(-1, config.route_count).type(config.ftype) # batch x route_count(4)
 
         context = self.poi_weight(context) # batch x context_len(32) x feat_dim(200)
@@ -61,8 +62,7 @@ class POI2VEC(nn.Module):
         pr_user = torch.mm(user, self.poi_weight.weight.t())
         pr_user = torch.sum(torch.exp(pr_user), 1)
         pr_user = torch.div(torch.exp(torch.sum(torch.mul(target, user), 1)), pr_user)
-        pr_ult = 1-torch.mul(pr_user, pr_path) 
-        print pr_ult
+        pr_ult = 1.0-torch.mul(pr_user, pr_path) 
         pr_ult = torch.sum(pr_ult)
 
         return pr_ult
@@ -86,7 +86,7 @@ class Rec:
 
 class Node:
 # Tree Node
-    theta = 0.1 
+    theta = 0.5
     count = 0 
     leaves = []
 
@@ -122,7 +122,7 @@ class Node:
 
     def find_route(self, (latitude, longitude)):
         if self.left == None:
-            prev_route = []
+            prev_route = [self.count]
             prev_lr = []
             return prev_route, prev_lr
 

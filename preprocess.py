@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import tqdm
 import os
-from model import Node, Rec
+from models import Node, Rec
 
 checkin_file = "../dataset/loc-gowalla_totalCheckins.txt"
 df = pd.read_csv(checkin_file, sep='\t', header=None)
@@ -80,11 +80,11 @@ def main(id2poi_batch, proc_i):
     np.save("./npy/splited_file/id2prob_%02d.npy" % proc_i, id2prob)
     
 if __name__ == '__main__':
-    batch_size = len(id2poi)/proc_n
     procs = []
-    for i in xrange(proc_n):
+    batch_size = len(id2poi)/proc_n
+    for i in xrange(proc_n+1):
         print "process #%02d running..."%(i+1)
-        proc = Process(target=main, args=(id2poi[i*batch_size:(i+1)*batch_size], i+1))
+        proc = Process(target=main, args=(id2poi[i*batch_size+1:(i+1)*batch_size+1], i+1))
         procs.append(proc)
         proc.start()
 
