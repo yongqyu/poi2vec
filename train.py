@@ -64,7 +64,6 @@ if __name__ == "__main__":
     for i in xrange(config.num_epochs):
         # Training
         batch_loss = 0.
-        p2v_model.train()
         train_batches = data.train_batch_iter(config.batch_size)
         for j, train_batch in enumerate(train_batches):
             user_batch, context_batch, target_batch = zip(*train_batch) 
@@ -79,6 +78,7 @@ if __name__ == "__main__":
             p2v_model.eval()
             valid_batches = data.valid_batch_iter(config.batch_size)
             print_score(valid_batches, step=2)
+            p2v_model.train()
 
 # Test
 print("==================================================================================")

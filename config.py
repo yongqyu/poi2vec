@@ -13,11 +13,11 @@ context_len = 32
 
 # Weight init
 weight_m = 0
-weight_v = 0.005
+weight_v = 0.1
 
 # Training Parameters
 batch_size = 128
 num_epochs = 30
 learning_rate = 0.005
-momentum = 0.9
+momentum = 0.0
 evaluate_every = 3

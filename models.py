@@ -30,8 +30,6 @@ class POI2VEC(nn.Module):
 
     def forward(self, user, context, target):
         target = map(int, target)
-        #print target, self.id2route[target].shape
-        # !!remove the last element of route, to downsize tree and route_weight!!
         route = Variable(torch.from_numpy(self.id2route[target]))\
                         .contiguous().view(-1, config.route_count*config.route_depth).type(config.ltype)
                         # batch x (route_coutn(4) x route_dept(22))
@@ -62,8 +60,7 @@ class POI2VEC(nn.Module):
         pr_user = torch.mm(user, self.poi_weight.weight.t())
         pr_user = torch.sum(torch.exp(pr_user), 1)
         pr_user = torch.div(torch.exp(torch.sum(torch.mul(target, user), 1)), pr_user)
-        pr_ult = 1.0-torch.mul(pr_user, pr_path) 
-        pr_ult = torch.sum(pr_ult)
+        pr_ult = 1.0-torch.sum(torch.mul(pr_user, pr_path))
 
         return pr_ult
         
